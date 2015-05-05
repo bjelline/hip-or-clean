@@ -25,3 +25,18 @@ Looked at venues/explore and venues/search, only search seems to work
 for user-less API.  need to iterate over results of search to get ratings.
 
 * always add v=20140806 https://developer.foursquare.com/overview/versioning
+
+
+### how to run locally
+
+    cp sample.env .env
+    foreman start
+
+this should give you a version that runs with a local postgres
+database and no api access.  add your foursquare tokens to .env 
+and enable the api to populate your database
+
+### how to deploy to heroku
+
+    heroku create
+    heroku plugins:install git://github.com/ddollar/heroku-config.git
