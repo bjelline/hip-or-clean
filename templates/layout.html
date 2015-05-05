@@ -1,0 +1,40 @@
+<!doctype html>
+<html class="no-js" lang="">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Hip or Clean</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.1.1/gh-fork-ribbon.min.css" />
+  </head>
+  <body>
+    <div class="github-fork-ribbon-wrapper right">
+      <div class="github-fork-ribbon">
+        <a href="https://github.com/bjelline/hip-or-clean">Fork me on GitHub</a>
+      </div>
+    </div>
+    <!--[if lt IE 8]>
+    <p class="browserupgrade">You are using an <strong>outdated</strong> browser. 
+    If you can, please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience
+    and be more secure.</p>
+    <![endif]-->
+
+    {% for message in get_flashed_messages() %}
+    <div class="alert info fade in">
+      <button class="close" data-dismiss="alert">×</button>
+      {{ message }}
+    </div>
+    {% endfor %}
+    {% block body %}{% endblock %}
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="{{ url_for('static', filename='jquery.js') }}"><\/script>')</script>
+      <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.js"></script>
+      <script>window.d3 || document.write('<script src="{{ url_for('static', filename='d3.js') }}"><\/script>')</script>
+        <script src="{{ url_for('static', filename='d3.geo.tile.v0.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='topojson.v1.min.js') }}"></script>
+        {% block javascript %}{% endblock %}
+      </body>
+    </html>
