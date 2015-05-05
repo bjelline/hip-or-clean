@@ -6,6 +6,12 @@ from logging     import StreamHandler
 
 app = Flask(__name__)
 
+foursquare_client_id     = os.environ.get('FOURSQUARE_CLIENT_ID')
+foursquare_client_secret = os.environ.get('FOURSQUARE_CLIENT_SECRET')
+socrata_app_token        = os.environ.get('SOCRATA_APP_TOKEN')
+socrata_secret_token     = os.environ.get('SOCRATA_SECRET_TOKEN')
+database_url             = os.environ.get('DATABASE_URL')
+
 file_handler = StreamHandler()
 file_handler.setLevel(logging.WARNING)
 app.logger.addHandler(file_handler)
@@ -214,10 +220,6 @@ def search_foursquare_venues( query ):
 def before_request():
   # try out api
   try:
-    foursquare_client_id     = os.environ.get('FOURSQUARE_CLIENT_ID')
-    foursquare_client_secret = os.environ.get('FOURSQUARE_CLIENT_SECRET')
-    socrata_app_token        = os.environ.get('SOCRATA_APP_TOKEN')
-    socrata_secret_token     = os.environ.get('SOCRATA_SECRET_TOKEN')
     do_api                   = os.environ.get('DO_API')
     g.do_api = False
     app.logger.error('do_api=%s' % do_api)
@@ -231,7 +233,6 @@ def before_request():
   # try connecting to database
   try:
     do_db                    = os.environ.get('DO_DB')
-    database_url             = os.environ.get('DATABASE_URL')
     g.do_db = False
     app.logger.error('do_db=%s' % do_db)
     if do_db == "1" and database_url:
