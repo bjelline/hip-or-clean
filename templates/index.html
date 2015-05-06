@@ -21,6 +21,11 @@
       overflow: auto;
       height: 200px;
     }
+
+    div.small.chart { 
+      width: 400px;
+      float:left;
+    }
   </style>
   <h1>Hip vs Clean</h1>
   <div id="input"><p>Looking for 
@@ -33,78 +38,65 @@
   <a href="https://foursquare.com/">Foursquare Rating</a> (y, more is good) vs 
   <a href="http://www.nyc.gov/html/doh/html/services/restaurant-inspection.shtml">Restaruant Inspection Score</a> (x, more is bad)</p></div>
   <div id="output"></div>
+  <div id="score-chart" class="small chart">
+    <strong>Inspection Score</strong> - less is better
+    <span class="reset"><span class="filter"></span></span>
+    <a class="reset" href="javascript:scoreChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+
+  </div>
+  <div id="rating-chart" class="small chart">
+    <strong>Foursquare Rating</strong> - more is better
+    <span class="reset"><span class="filter"></span></span>
+    <a class="reset" href="javascript:ratingChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+  </div>
   <div class="logger"></div>
-{% endblock %}
-{% block javascript %}
+  {% endblock %}
+  {% block javascript %}
   <script>
-    var logger = { 
-      'element': $('.logger') ,
-      'log': function(s) {
-        this.element.append($("<p>" + s + "</p>"));
-      },
-      'dir': function(s) {
-        this.element.append($("<p>" + s + "</p>"));
-      }
-    };
-
-    var margin = {top: 20, right: 15, bottom: 60, left: 60}
-      , width = 960 - margin.left - margin.right
-      , height = 500 - margin.top - margin.bottom;
-    
-    var x = d3.scale.linear().domain([0,32]).range([ 0, width ]);
-    var y = d3.scale.linear().domain([0,10]).range([ height, 0 ]);
-
-    var chart = d3.select('#output')
-      .append('svg:svg')
-      .attr('width', width + margin.right + margin.left)
-      .attr('height', height + margin.top + margin.bottom)
-      .attr('class', 'chart');
-
-    var main = chart.append('g')
-      .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
-      .attr('width', width)
-      .attr('height', height)
-      .attr('class', 'main');
-        
-    // draw the x axis
-    var xAxis = d3.svg.axis()
-      .scale(x)
-      .orient('bottom');
-
-    main.append('g')
-      .attr('transform', 'translate(0,' + height + ')')
-      .attr('class', 'main axis date')
-      .call(xAxis);
-
-    // draw the y axis
-    var yAxis = d3.svg.axis()
-      .scale(y)
-      .orient('left');
-
-    var g = main.append("svg:g"); 
-    g.attr('transform', 'translate(0,0)')
-      .attr('class', 'main axis date')
-      .call(yAxis);
-
-
-    var data = [[ 7, 7.2, "BarKogi Korean Restaurant & Bar", "Food contact surface not properly washed"], 
-                [11, 8.0, "Patsy's Italian Restaurant", "Food not protected from potential source of contamination"]]; // evil global!
+    var scoreChart  = dc.barChart('#score-chart');
+    var ratingChart = dc.barChart('#rating-chart');
+    var data = { 'a': [[ 7, 7.2, "BarKogi Korean Restaurant & Bar", "Food contact surface not properly washed"], 
+      [11, 8.0, "Patsy's Italian Restaurant", "Food not protected from potential source of contamination"]] }; // evil global!
     function load_and_display() {
       var q = $('#filter').val();
       console.log("searching for " + q);
-      logger.log("searching for " + q);
-      d3.json("/combined.json?filter=" + q, function(error, whole_json) {
-        data = whole_json['data'];
-        console.log("I got me some JSON! " + data.length  + " points")
-        logger.log("I got me some JSON! " + data.length  + " points")
-        var scatterplot = g.selectAll("scatter-dots").data(data, function(d) { return d; });
-        scatterplot.enter().append("svg:circle")
-                  .attr("cx", function (d,i) { return x(d[0]); } )
-                  .attr("cy", function (d) { return y(d[1]); } )
-                  .attr("r", 8)
-                  .append("svg:title")
-                    .text(function(d) { return d[2] + ":" + d[0] + " / " + d[1] + "\n" + d[3]});
-        scatterplot.exit().remove();
+
+      d3.csv("/data.csv?filter=" + q, function(error, d) {
+        data.a = d
+        // coerce data
+        data.a.forEach(function(d, i) {
+          d.index                = i;
+          d.score                = parseInt(d.score);
+          d.rating               = parseFloat(d.rating);
+        });
+        //
+        data.cf = crossfilter( data.a );
+
+        data.score_dim    = data.cf.dimension(function(d) { return d.score });
+        data.score_group  = data.score_dim.group(function(d) { return Math.floor(d / 5) * 5; });
+        data.rating_dim   = data.cf.dimension(function(d) { return d.rating });
+        data.rating_group = data.rating_dim.group(function(d) { return Math.floor(d); });
+
+        scoreChart.dimension(data.score_dim)
+        .group(data.score_group)
+        .xUnits(dc.units.integers) 
+        .width(230).height(100).margins({top: 10, right: 10, bottom: 30, left: 40})
+        .elasticY(true)
+        .x(d3.scale.linear().domain([0, 40]).rangeRound([0, 10 * 21]));
+        scoreChart.xAxis().ticks(5);
+        scoreChart.yAxis().ticks(4);
+
+        ratingChart.dimension(data.rating_dim)
+        .group(data.rating_group)
+        .xUnits(dc.units.integers) 
+        .width(230).height(100).margins({top: 10, right: 10, bottom: 30, left: 40})
+        .elasticY(true)
+        .x(d3.scale.linear().domain([0, 10]).rangeRound([0, 10 * 21]));
+        ratingChart.xAxis().ticks(5);
+        ratingChart.yAxis().ticks(4);
+
+        dc.renderAll();
+
       });
     }
 

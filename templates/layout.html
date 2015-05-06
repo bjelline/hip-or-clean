@@ -33,6 +33,8 @@
     <script>window.jQuery || document.write('<script src="{{ url_for('static', filename='jquery.js') }}"><\/script>')</script>
       <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.js"></script>
       <script>window.d3 || document.write('<script src="{{ url_for('static', filename='d3.js') }}"><\/script>')</script>
+        <script src="{{ url_for('static', filename='crossfilter.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='dc.js') }}"></script>
         <script src="{{ url_for('static', filename='d3.geo.tile.v0.min.js') }}"></script>
         <script src="{{ url_for('static', filename='topojson.v1.min.js') }}"></script>
         {% block javascript %}{% endblock %}
