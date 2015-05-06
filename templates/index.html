@@ -93,7 +93,7 @@
       scoreChart  = dc.barChart('#score-chart');
       ratingChart = dc.barChart('#rating-chart');
       mapChart    = dc.leafletMarkerChart('#the-map');
-      theTable    = dc.dataTable('#the-table');
+      // theTable    = dc.dataTable('#the-table');
 
       data = { 'a': [[ 7, 7.2, "BarKogi Korean Restaurant & Bar", "Food contact surface not properly washed"], 
         [11, 8.0, "Patsy's Italian Restaurant", "Food not protected from potential source of contamination"]] }; // evil global!
@@ -127,7 +127,10 @@
           .width(800).height(800)
           .center([40.73,-73.98])
           .zoom(13)
-          .renderPopup(false)
+          .renderPopup(true)
+          .popup(function(d, marker){
+                  return d.key + " : " + d.value;
+          })
           .cluster(true); 
       
           scoreChart.dimension(data.score_dim)
@@ -148,6 +151,7 @@
           ratingChart.xAxis().ticks(5);
           ratingChart.yAxis().ticks(4);
 
+          /*
           theTable
           .dimension(data.name_dim)
           .group(function (d) { return data.name_dim.top(Infinity).length + " selected restaurants"; })
@@ -156,6 +160,7 @@
           { 'label': 'F', 'format': function(d)  { return d.rating                     } },
           { 'label': 'I',  'format': function(d)  { return d.score                      } },
           ]);
+          */
 
           dc.renderAll();
 
