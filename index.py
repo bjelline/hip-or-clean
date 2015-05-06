@@ -59,14 +59,23 @@ def add_inspection_results(given_venues):
     new_venues =[ ]
     for v in given_venues:
       app.logger.error('asking soda for name = %s, phone = %s ' % ( v['name'], v['phone'] ) )
-      url = 'https://data.cityofnewyork.us/resource/xx67-kt59.json?' + urllib.urlencode({
-        # $where=within_box(location, 41.885001, -87.645939, 41.867011, -87.618516)
-        # '$where': "phone='%s' OR dba='%s' OR address='%s'" % ( v['phone'], v['name'], v['address'] )
-        '$where': "phone='%s' OR dba='%s'" % ( soda_escape(v['phone']), soda_escape(v['name']))
-        # 'dba': v['name']
-      })
-      app.logger.error(url)
       try:
+        if 'phone' in v and 'name' in v:
+          url = 'https://data.cityofnewyork.us/resource/xx67-kt59.json?' + urllib.urlencode({
+            '$where': "phone='%s' OR dba='%s'" % ( soda_escape(v['phone']), soda_escape(v['name']))
+          })
+        elif 'phone' in v:
+          url = 'https://data.cityofnewyork.us/resource/xx67-kt59.json?' + urllib.urlencode({
+            '$where': "phone='%s'" % ( soda_escape(v['phone']) )
+          })
+        elif 'name' in v:
+          url = 'https://data.cityofnewyork.us/resource/xx67-kt59.json?' + urllib.urlencode({
+            '$where': "OR dba='%s'" % ( soda_escape(v['name']))
+          })
+        else
+          app.logger.error("not enough info to call soda")
+          continue
+        app.logger.error("will call " + url)
         soda_response, soda_json = g.web.request( url, "GET")
         app.logger.error( "got %d chars of json" % len(soda_json) )
         soda_content = json.loads(soda_json)
