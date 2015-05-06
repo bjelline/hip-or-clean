@@ -13,7 +13,7 @@ socrata_secret_token     = os.environ.get('SOCRATA_SECRET_TOKEN')
 database_url             = os.environ.get('DATABASE_URL')
 
 file_handler = StreamHandler()
-file_handler.setLevel(logging.WARNING)
+file_handler.setLevel(logging.INFO)
 app.logger.addHandler(file_handler)
 
 def json_serial(obj):
