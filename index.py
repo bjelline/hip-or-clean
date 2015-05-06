@@ -149,76 +149,80 @@ def search_foursquare_venues( query ):
         'query':         query
         })
   app.logger.error('search foursquare for %s: %s' % (query, url))
-  fsq_response, fsq_content = g.web.request( url, "GET")
-  foursquare_response = json.loads(fsq_content)
+  try:
+    fsq_response, fsq_content = g.web.request( url, "GET")
+    foursquare_response = json.loads(fsq_content)
 
-  if foursquare_response['meta']['code'] != 200:
-    raise "error reading foursquare api"
+    if foursquare_response['meta']['code'] != 200:
+      raise "error reading foursquare api"
 
-  venues = []
-  found_categories = set()
-  for venue in foursquare_response['response']['venues']:
-    these_categories =  set( [ c['name'] for c in venue['categories'] ] )
-    found_categories = found_categories.union( these_categories )
-    if query in these_categories:
-      venue_response, venue_content = g.web.request('https://api.foursquare.com/v2/venues/' + venue['id'] + '?' + 
-        urllib.urlencode({
-          'client_id':     foursquare_client_id,
-          'client_secret': foursquare_client_secret,
-          'v':             '20140806'
-        }), "GET"
-      )
-      venue_response = json.loads(venue_content)
-      if 'response' in venue_response and 'venue' in venue_response['response']:
-        v = venue_response['response']['venue']
-        if 'menu' in v:
-          del(v['menu'])
-        if 'tips' in v and 'groups' in v['tips']:
-          del(v['tips']['groups'])
-        v2 = {
-            "phone": v['contact']['phone'] if 'contact' in v and 'phone' in  v['contact'] else None,
-            "price_tier": v['price']['tier'] if 'price' in v and 'tier' in  v['price'] else None,
-            "likes_count": v['likes']['count'], 
-            "hereNow_count": v['hereNow']['count'], 
-            "canonicalUrl": v['canonicalUrl'],
-            "id": v['id'],
-            "name": v['name'],
-            "address": None,
-            "rating": v['rating'] if 'rating' in v else 0,
-            "url": v['url'] if 'url' in v else None,
-            "bestPhoto": v['bestPhoto']['prefix'] + "300x300" + v['bestPhoto']['suffix'] if 'bestPhoto' in v else '',
-            "verified": v['verified']
-        }
-        if 'address' in v:
-          v2['address'] = v['address']
-        if 'stats' in v:
-          v2.update( v['stats'] )
-        if 'location' in v:
-          v2.update( v['location'] )
-        if 'formattedAddress' in v2:
-          del( v2['formattedAddress'] )
-        venues.append( v2 )
+    venues = []
+    found_categories = set()
+    for venue in foursquare_response['response']['venues']:
+      these_categories =  set( [ c['name'] for c in venue['categories'] ] )
+      found_categories = found_categories.union( these_categories )
+      if query in these_categories:
+        venue_response, venue_content = g.web.request('https://api.foursquare.com/v2/venues/' + venue['id'] + '?' + 
+          urllib.urlencode({
+            'client_id':     foursquare_client_id,
+            'client_secret': foursquare_client_secret,
+            'v':             '20140806'
+          }), "GET"
+        )
+        venue_response = json.loads(venue_content)
+        if 'response' in venue_response and 'venue' in venue_response['response']:
+          v = venue_response['response']['venue']
+          if 'menu' in v:
+            del(v['menu'])
+          if 'tips' in v and 'groups' in v['tips']:
+            del(v['tips']['groups'])
+          v2 = {
+              "phone": v['contact']['phone'] if 'contact' in v and 'phone' in  v['contact'] else None,
+              "price_tier": v['price']['tier'] if 'price' in v and 'tier' in  v['price'] else None,
+              "likes_count": v['likes']['count'], 
+              "hereNow_count": v['hereNow']['count'], 
+              "canonicalUrl": v['canonicalUrl'],
+              "id": v['id'],
+              "name": v['name'],
+              "address": None,
+              "rating": v['rating'] if 'rating' in v else 0,
+              "url": v['url'] if 'url' in v else None,
+              "bestPhoto": v['bestPhoto']['prefix'] + "300x300" + v['bestPhoto']['suffix'] if 'bestPhoto' in v else '',
+              "verified": v['verified']
+          }
+          if 'address' in v:
+            v2['address'] = v['address']
+          if 'stats' in v:
+            v2.update( v['stats'] )
+          if 'location' in v:
+            v2.update( v['location'] )
+          if 'formattedAddress' in v2:
+            del( v2['formattedAddress'] )
+          venues.append( v2 )
 
-  app.logger.error('while looking for %s I found %s' % (query, found_categories))
-  if g.do_db: 
-    for x in venues: 
-      app.logger.info( x )
-      try:
-        g.db_cursor.execute("""DELETE FROM foursquare_cache WHERE id=%(id)s""", x)
-        g.db_cursor.execute("""
-          INSERT INTO foursquare_cache (
-            id, name, phone, verified,
-            price_tier, rating,
-            address, lat, lng, city, cc, country, state,
-            likes_count
-          ) VALUES (
-            %(id)s, %(name)s, %(phone)s, %(verified)s,
-            %(price_tier)s, %(rating)s,
-            %(address)s, %(lat)s, %(lng)s, %(city)s, %(cc)s, %(country)s, %(state)s,
-            %(likes_count)s
-          )""", x )
-      except Exception as inst:
-        app.logger.error('error %s: could not write %s to db' % (inst, x))
+    app.logger.error('while looking for %s I found %s' % (query, found_categories))
+    if g.do_db: 
+      for x in venues: 
+        app.logger.info( x )
+        try:
+          g.db_cursor.execute("""DELETE FROM foursquare_cache WHERE id=%(id)s""", x)
+          g.db_cursor.execute("""
+            INSERT INTO foursquare_cache (
+              id, name, phone, verified,
+              price_tier, rating,
+              address, lat, lng, city, cc, country, state,
+              likes_count
+            ) VALUES (
+              %(id)s, %(name)s, %(phone)s, %(verified)s,
+              %(price_tier)s, %(rating)s,
+              %(address)s, %(lat)s, %(lng)s, %(city)s, %(cc)s, %(country)s, %(state)s,
+              %(likes_count)s
+            )""", x )
+        except Exception as inst:
+          app.logger.error('error %s: could not write %s to db' % (inst, x))
+
+  except Exception as inst:
+    app.logger.error('Error in %s: %s %s' % (sys.exc_traceback.tb_lineno , type(ex), ex))
 
   return venues
 

@@ -79,14 +79,17 @@
       <span class="reset"><span class="filter"></span></span>
       <a class="reset" href="javascript:ratingChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
     </div>
+    <table id="the-table" class="table-hover dc-data-table"></table>
   </div>
     {% endblock %}
     {% block javascript %}
     <script>
+    var scoreChart, ratingChart, mapChart, dataTable;
     $(document).ready(function(){
-      var scoreChart  = dc.barChart('#score-chart');
-      var ratingChart = dc.barChart('#rating-chart');
-      var mapChart    = dc.leafletMarkerChart('#the-map');
+      scoreChart  = dc.barChart('#score-chart');
+      ratingChart = dc.barChart('#rating-chart');
+      mapChart    = dc.leafletMarkerChart('#the-map');
+      theTable    = dc.dataTable('#the-table');
 
       var data = { 'a': [[ 7, 7.2, "BarKogi Korean Restaurant & Bar", "Food contact surface not properly washed"], 
         [11, 8.0, "Patsy's Italian Restaurant", "Food not protected from potential source of contamination"]] }; // evil global!
@@ -106,6 +109,7 @@
           //
           data.cf = crossfilter( data.a );
 
+          data.name_dim     = data.cf.dimension(function(d) { return d.name });
           data.score_dim    = data.cf.dimension(function(d) { return d.score });
           data.score_group  = data.score_dim.group(function(d) { return Math.floor(d / 5) * 5; });
           data.rating_dim   = data.cf.dimension(function(d) { return d.rating });
@@ -119,10 +123,7 @@
           .width(800).height(800)
           .center([40.73,-73.98])
           .zoom(13)
-          .renderPopup(true)
-          .popup(function(d, marker){
-            return d.key + " : " + d.value;
-          })
+          .renderPopup(false)
           .cluster(true); 
       
           scoreChart.dimension(data.score_dim)
@@ -142,6 +143,16 @@
           .x(d3.scale.linear().domain([0, 10]).rangeRound([0, 10 * 21]));
           ratingChart.xAxis().ticks(5);
           ratingChart.yAxis().ticks(4);
+
+          theTable
+          .dimension(data.name_dim)
+          .group(function (d) { return data.name_dim.top(Infinity).length + " selected restaurants"; })
+          .columns([
+          { 'label': 'Name',              'format': function(d)  { return '<a href="/group/'+d.id_group+'">' + d.name + '</a>'   } },
+          { 'label': 'Foursquare Rating', 'format': function(d)  { return d.rating                     } },
+          { 'label': 'Inspection Score',  'format': function(d)  { return d.score                      } },
+          { 'label': 'Address',           'format': function(d)  { return d.address           } },
+          ]);
 
           dc.renderAll();
 
