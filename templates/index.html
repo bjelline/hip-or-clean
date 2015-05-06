@@ -98,10 +98,12 @@
       data = { 'a': [[ 7, 7.2, "BarKogi Korean Restaurant & Bar", "Food contact surface not properly washed"], 
         [11, 8.0, "Patsy's Italian Restaurant", "Food not protected from potential source of contamination"]] }; // evil global!
       function load_and_display() {
-        var q = $('#filter').val();
+        /* var q = $('#filter').val();
         console.log("searching for " + q);
-
+      
         d3.csv("/data.csv?filter=" + q, function(error, d) {
+          */
+        d3.csv("/data.csv", function(error, d) {
           data.a = d
           // coerce data
           data.a.forEach(function(d, i) {
@@ -167,7 +169,7 @@
         });
       }
 
-      $('#filter').on('change', load_and_display);
+      // $('#filter').on('change', load_and_display);
       load_and_display();
     });
   </script>
