@@ -348,7 +348,13 @@ def data():
     writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
     writer.writerow(cols)
     for v in venues:
-      writer.writerow([ v[ c ] for c in cols ])
+      row = []
+      for c in cols:
+        if c in v:
+          row.append(v[c])
+        else:
+          row.append("")
+      writer.writerow(row)
     resp = Response( output.getvalue(), status=200, mimetype='text/plain')
   except Exception as ex:
     app.logger.error('Error loading data in %s: %s %s' % (sys.exc_traceback.tb_lineno , type(ex), ex))
