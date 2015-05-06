@@ -72,7 +72,7 @@ def add_inspection_results(given_venues):
           url = 'https://data.cityofnewyork.us/resource/xx67-kt59.json?' + urllib.urlencode({
             '$where': "OR dba='%s'" % ( soda_escape(v['name']))
           })
-        else
+        else:
           app.logger.error("not enough info to call soda")
           continue
         app.logger.error("will call " + url)
