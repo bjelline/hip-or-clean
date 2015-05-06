@@ -332,12 +332,14 @@ def data():
 
     # app.logger.info("datetime.now() -> %s" %  json.dumps({'now': datetime.datetime.now() }, default=json_serial) )
 
-    cols = [ 'score', 'rating', 'name', 'violation_description' ]
+    app.logger.error('all columns in my results: %s' % venues[0].keys())
+    
+    cols = [ 'score', 'rating', 'name',  'boro', 'street', 'lng', 'lat', 'violation_description' ]
     output = io.BytesIO()
     writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
     writer.writerow(cols)
     for v in venues:
-      writer.writerow([ v['score'], v['rating'], v['name'], v['violation_description']])
+      writer.writerow([ v[ c ] for c in cols ])
     resp = Response( output.getvalue(), status=200, mimetype='text/plain')
   except Exception as ex:
     app.logger.error('Error loading data in %s: %s %s' % (sys.exc_traceback.tb_lineno , type(ex), ex))

@@ -26,81 +26,130 @@
       width: 400px;
       float:left;
     }
-  </style>
-  <h1>Hip vs Clean</h1>
-  <div id="input"><p>Looking for 
-  <select name="filter" id="filter">
-  <option selected>Greek Restaurant</option>
-  <option>Japanese Restaurant</option>
-  <option>Italian Restaurant</option>
-  </select>
-  in Manhattan, 
-  <a href="https://foursquare.com/">Foursquare Rating</a> (y, more is good) vs 
-  <a href="http://www.nyc.gov/html/doh/html/services/restaurant-inspection.shtml">Restaruant Inspection Score</a> (x, more is bad)</p></div>
-  <div id="output"></div>
-  <div id="score-chart" class="small chart">
-    <strong>Inspection Score</strong> - less is better
-    <span class="reset"><span class="filter"></span></span>
-    <a class="reset" href="javascript:scoreChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
 
-  </div>
-  <div id="rating-chart" class="small chart">
-    <strong>Foursquare Rating</strong> - more is better
-    <span class="reset"><span class="filter"></span></span>
-    <a class="reset" href="javascript:ratingChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-  </div>
-  <div class="logger"></div>
-  {% endblock %}
-  {% block javascript %}
-  <script>
-    var scoreChart  = dc.barChart('#score-chart');
-    var ratingChart = dc.barChart('#rating-chart');
-    var data = { 'a': [[ 7, 7.2, "BarKogi Korean Restaurant & Bar", "Food contact surface not properly washed"], 
-      [11, 8.0, "Patsy's Italian Restaurant", "Food not protected from potential source of contamination"]] }; // evil global!
-    function load_and_display() {
-      var q = $('#filter').val();
-      console.log("searching for " + q);
-
-      d3.csv("/data.csv?filter=" + q, function(error, d) {
-        data.a = d
-        // coerce data
-        data.a.forEach(function(d, i) {
-          d.index                = i;
-          d.score                = parseInt(d.score);
-          d.rating               = parseFloat(d.rating);
-        });
-        //
-        data.cf = crossfilter( data.a );
-
-        data.score_dim    = data.cf.dimension(function(d) { return d.score });
-        data.score_group  = data.score_dim.group(function(d) { return Math.floor(d / 5) * 5; });
-        data.rating_dim   = data.cf.dimension(function(d) { return d.rating });
-        data.rating_group = data.rating_dim.group(function(d) { return Math.floor(d); });
-
-        scoreChart.dimension(data.score_dim)
-        .group(data.score_group)
-        .xUnits(dc.units.integers) 
-        .width(230).height(100).margins({top: 10, right: 10, bottom: 30, left: 40})
-        .elasticY(true)
-        .x(d3.scale.linear().domain([0, 40]).rangeRound([0, 10 * 21]));
-        scoreChart.xAxis().ticks(5);
-        scoreChart.yAxis().ticks(4);
-
-        ratingChart.dimension(data.rating_dim)
-        .group(data.rating_group)
-        .xUnits(dc.units.integers) 
-        .width(230).height(100).margins({top: 10, right: 10, bottom: 30, left: 40})
-        .elasticY(true)
-        .x(d3.scale.linear().domain([0, 10]).rangeRound([0, 10 * 21]));
-        ratingChart.xAxis().ticks(5);
-        ratingChart.yAxis().ticks(4);
-
-        dc.renderAll();
-
-      });
+    body { margin:0; padding:0; }
+    #the-map {  height: 800px; width: 800px; margin-right: 10px; margin-top: 0px; }
+    /*
+    #the-map { 
+      position:absolute; 
+      top:0; bottom:0; 
+      width:100%; 
+      z-index: 0; 
     }
+    #overlay {
+      position: absolute; 
+      z-index: 1; 
+      width: 300px;
+      left: 10px;
+      bottom: 10px;
+      height: 500px;
+      padding: 10px;
+      background: black;
+      border-radius: 4px;
+      opacity: .75; 
+      color: white;
+    }
+    */
+  </style>
+  <div id="the-map"></div>
+  <div id="overlay">
+    <h1>Hip vs Clean</h1>
+    <div id="input"><p>Looking for 
+      <select name="filter" id="filter">
+        <option selected>Greek Restaurant</option>
+        <option>Japanese Restaurant</option>
+        <option>Italian Restaurant</option>
+      </select>
+    in Manhattan, 
+    <a href="https://foursquare.com/">Foursquare Rating</a> (y, more is good) vs 
+    <a href="http://www.nyc.gov/html/doh/html/services/restaurant-inspection.shtml">Restaruant Inspection Score</a> (x, more is bad)</p></div>
+    <div>
+      <strong>Location</strong>
+      <a class="reset" href="javascript:mapChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+      <span class="reset" style="display: none;"> | Current filter: <span class="filter"></span></span>
+    </div>
+    <div id="score-chart" class="small chart">
+      <strong>Inspection Score</strong> - less is better
+      <span class="reset"><span class="filter"></span></span>
+      <a class="reset" href="javascript:scoreChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
 
-    $('#filter').on('change', load_and_display);
-    load_and_display();
+    </div>
+    <div id="rating-chart" class="small chart">
+      <strong>Foursquare Rating</strong> - more is better
+      <span class="reset"><span class="filter"></span></span>
+      <a class="reset" href="javascript:ratingChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+    </div>
+  </div>
+    {% endblock %}
+    {% block javascript %}
+    <script>
+    $(document).ready(function(){
+      var scoreChart  = dc.barChart('#score-chart');
+      var ratingChart = dc.barChart('#rating-chart');
+      var mapChart    = dc.leafletMarkerChart('#the-map');
+
+      var data = { 'a': [[ 7, 7.2, "BarKogi Korean Restaurant & Bar", "Food contact surface not properly washed"], 
+        [11, 8.0, "Patsy's Italian Restaurant", "Food not protected from potential source of contamination"]] }; // evil global!
+      function load_and_display() {
+        var q = $('#filter').val();
+        console.log("searching for " + q);
+
+        d3.csv("/data.csv?filter=" + q, function(error, d) {
+          data.a = d
+          // coerce data
+          data.a.forEach(function(d, i) {
+            d.index  = i;
+            d.score  = parseInt(d.score);
+            d.rating = parseFloat(d.rating);
+            d.geo    = d.lat + "," + d.lng;
+          });
+          //
+          data.cf = crossfilter( data.a );
+
+          data.score_dim    = data.cf.dimension(function(d) { return d.score });
+          data.score_group  = data.score_dim.group(function(d) { return Math.floor(d / 5) * 5; });
+          data.rating_dim   = data.cf.dimension(function(d) { return d.rating });
+          data.rating_group = data.rating_dim.group(function(d) { return Math.floor(d); });
+          data.geo_dim      = data.cf.dimension(function(d) { return d.geo; });
+          data.geo_group    = data.geo_dim.group().reduceCount();
+        
+          mapChart
+          .dimension(data.geo_dim)
+          .group(data.geo_group)
+          .width(800).height(800)
+          .center([40.73,-73.98])
+          .zoom(13)
+          .renderPopup(true)
+          .popup(function(d, marker){
+            return d.key + " : " + d.value;
+          })
+          .cluster(true); 
+      
+          scoreChart.dimension(data.score_dim)
+          .group(data.score_group)
+          .xUnits(dc.units.integers) 
+          .width(230).height(100).margins({top: 10, right: 10, bottom: 30, left: 40})
+          .elasticY(true)
+          .x(d3.scale.linear().domain([0, 40]).rangeRound([0, 10 * 21]));
+          scoreChart.xAxis().ticks(5);
+          scoreChart.yAxis().ticks(4);
+
+          ratingChart.dimension(data.rating_dim)
+          .group(data.rating_group)
+          .xUnits(dc.units.integers) 
+          .width(230).height(100).margins({top: 10, right: 10, bottom: 30, left: 40})
+          .elasticY(true)
+          .x(d3.scale.linear().domain([0, 10]).rangeRound([0, 10 * 21]));
+          ratingChart.xAxis().ticks(5);
+          ratingChart.yAxis().ticks(4);
+
+          dc.renderAll();
+
+        });
+      }
+
+      $('#filter').on('change', load_and_display);
+      load_and_display();
+    });
   </script>
   {% endblock %}
