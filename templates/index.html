@@ -24,7 +24,7 @@
 
     div.small.chart { 
       width: 400px;
-      float:left;
+      float:right;
     }
 
     body { margin:0; padding:0; }
@@ -50,24 +50,28 @@
       color: white;
     }
     */
+
+    #the-table { clear: right; }
+    #the-table tr:hover { background-color: #ddd ;}
+    #the-table th { text-align: left; }
+    #the-table td._2 { text-align: right; }
+    ._1,._2 { padding-left: 10px; padding-right: 10px;}
+    #the-table td + td { border-left: 1px solid #ddd; }
   </style>
   <div id="the-map"></div>
   <div id="overlay">
     <h1>Hip vs Clean</h1>
-    <div id="input"><p>Looking for 
+    <div id="input"><p>
+      <!-- Looking for 
       <select name="filter" id="filter">
         <option selected>Greek Restaurant</option>
         <option>Japanese Restaurant</option>
         <option>Italian Restaurant</option>
       </select>
-    in Manhattan, 
-    <a href="https://foursquare.com/">Foursquare Rating</a> (y, more is good) vs 
-    <a href="http://www.nyc.gov/html/doh/html/services/restaurant-inspection.shtml">Restaruant Inspection Score</a> (x, more is bad)</p></div>
+      in Manhattan,  -->
+      <a href="https://foursquare.com/">Foursquare Rating</a> (0-10, more is good) vs  <br>
+    <a href="http://www.nyc.gov/html/doh/html/services/restaurant-inspection.shtml">Restaruant Inspection Score</a> (0-32, less is bad)</p></div>
     <div>
-      <strong>Location</strong>
-      <a class="reset" href="javascript:mapChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-      <span class="reset" style="display: none;"> | Current filter: <span class="filter"></span></span>
-    </div>
     <div id="score-chart" class="small chart">
       <strong>Inspection Score</strong> - less is better
       <span class="reset"><span class="filter"></span></span>
@@ -84,14 +88,14 @@
     {% endblock %}
     {% block javascript %}
     <script>
-    var scoreChart, ratingChart, mapChart, dataTable;
+    var scoreChart, ratingChart, mapChart, dataTable, data;
     $(document).ready(function(){
       scoreChart  = dc.barChart('#score-chart');
       ratingChart = dc.barChart('#rating-chart');
       mapChart    = dc.leafletMarkerChart('#the-map');
       theTable    = dc.dataTable('#the-table');
 
-      var data = { 'a': [[ 7, 7.2, "BarKogi Korean Restaurant & Bar", "Food contact surface not properly washed"], 
+      data = { 'a': [[ 7, 7.2, "BarKogi Korean Restaurant & Bar", "Food contact surface not properly washed"], 
         [11, 8.0, "Patsy's Italian Restaurant", "Food not protected from potential source of contamination"]] }; // evil global!
       function load_and_display() {
         var q = $('#filter').val();
@@ -148,10 +152,9 @@
           .dimension(data.name_dim)
           .group(function (d) { return data.name_dim.top(Infinity).length + " selected restaurants"; })
           .columns([
-          { 'label': 'Name',              'format': function(d)  { return '<a href="/group/'+d.id_group+'">' + d.name + '</a>'   } },
-          { 'label': 'Foursquare Rating', 'format': function(d)  { return d.rating                     } },
-          { 'label': 'Inspection Score',  'format': function(d)  { return d.score                      } },
-          { 'label': 'Address',           'format': function(d)  { return d.address           } },
+          { 'label': 'Name',              'format': function(d)  { return '<a href="'+d.name+'">' + d.name + '</a><br>' + d.street   } },
+          { 'label': 'F', 'format': function(d)  { return d.rating                     } },
+          { 'label': 'I',  'format': function(d)  { return d.score                      } },
           ]);
 
           dc.renderAll();
